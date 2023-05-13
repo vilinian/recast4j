@@ -70,6 +70,7 @@ public class TestNavmeshTool implements Tool {
     private int m_straightPathOptions;
     private List<Long> m_polys;
     private boolean m_hitResult;
+    private long m_hitRef;
     private List<Long> m_parent;
     private float m_neighbourhoodRadius;
     private final float[] m_queryPoly = new float[12];
@@ -412,11 +413,13 @@ public class TestNavmeshTool implements Tool {
                             // No hit
                             m_hitPos = Arrays.copyOf(m_epos, m_epos.length);
                             m_hitResult = false;
+                            m_hitRef = 0L;
                         } else {
                             // Hit
                             m_hitPos = vLerp(m_spos, m_epos, hit.result.t);
                             m_hitNormal = Arrays.copyOf(hit.result.hitNormal, hit.result.hitNormal.length);
                             m_hitResult = true;
+                            m_hitRef = m_navQuery.findNearestPoly(m_hitPos, m_polyPickExt, m_filter).result.getNearestRef();
                         }
                         // Adjust height.
                         if (hit.result.path.size() > 0) {
@@ -914,4 +917,29 @@ public class TestNavmeshTool implements Tool {
 
         }
     }
+
+
+    @Override
+    public String getPosStatus() {
+        StringBuilder sb = new StringBuilder();
+        if (m_sposSet && m_spos != null) {
+            sb.append(String.format("Start: [%d](%.1f, %.1f, %.1f)", m_startRef, m_spos[0], m_spos[1], m_spos[2]));
+        } else {
+            sb.append("Start: NOT SET!");
+        }
+        sb.append(" --- ");
+        if (m_eposSet && m_epos != null) {
+            sb.append(String.format("End: [%d](%.1f, %.1f, %.1f)", m_endRef, m_epos[0], m_epos[1], m_epos[2]));
+        } else {
+            sb.append("End: NOT SET!");
+        }
+        sb.append(" --- ");
+        if (m_hitResult && m_hitPos != null) {
+            sb.append(String.format("HitPos: [%d](%.1f, %.1f, %.1f)", m_hitRef, m_hitPos[0], m_hitPos[1], m_hitPos[2]));
+        } else {
+            sb.append("HitPos: NOT SET!");
+        }
+        return sb.toString();
+    }
+
 }

@@ -63,6 +63,7 @@ import org.recast4j.demo.tool.CrowdTool;
 import org.recast4j.demo.tool.DynamicUpdateTool;
 import org.recast4j.demo.tool.JumpLinkBuilderTool;
 import org.recast4j.demo.tool.OffMeshConnectionTool;
+import org.recast4j.demo.tool.StatusUI;
 import org.recast4j.demo.tool.TestNavmeshTool;
 import org.recast4j.demo.tool.Tool;
 import org.recast4j.demo.tool.ToolsUI;
@@ -123,6 +124,7 @@ public class RecastDemo {
     private final float[] markerPosition = new float[3];
     private ToolsUI toolsUI;
     private SettingsUI settingsUI;
+    private StatusUI statusUI;
     private long prevFrameTime;
 
     public void start() {
@@ -136,8 +138,9 @@ public class RecastDemo {
         settingsUI = new SettingsUI();
         toolsUI = new ToolsUI(new TestNavmeshTool(), new OffMeshConnectionTool(), new ConvexVolumeTool(), new CrowdTool(),
                 new JumpLinkBuilderTool(), new DynamicUpdateTool());
+        statusUI = new StatusUI();
 
-        nuklearUI = new NuklearUI(window, mouse, settingsUI, toolsUI);
+        nuklearUI = new NuklearUI(window, mouse, settingsUI, toolsUI, statusUI);
 
         DemoInputGeomProvider geom = loadInputMesh(getClass().getClassLoader().getResourceAsStream("nav_test.obj"));
         sample = new Sample(geom, Collections.emptyList(), null, settingsUI, dd);
@@ -181,6 +184,9 @@ public class RecastDemo {
                 }
                 simIter++;
             }
+
+            // Update status
+            statusUI.handleUpdate(toolsUI.getTool());
 
             // Set the viewport.
             // glViewport(0, 0, width, height);
@@ -314,6 +320,7 @@ public class RecastDemo {
                             pos[2] = rayStart[2] + (rayEnd[2] - rayStart[2]) * hitTime;
                             if (tool != null) {
                                 tool.handleClick(rayStart, pos, processHitTestShift);
+                                statusUI.handleClick(tool);
                             }
                         }
                     } else {

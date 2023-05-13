@@ -38,4 +38,8 @@ public interface Tool {
 
     default void handleClickRay(float[] start, float[] direction, boolean shift) {
     }
+
+    default String getPosStatus() {
+        return "";
+    }
 }
