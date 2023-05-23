@@ -68,6 +68,10 @@ public class MeshDataReaderWriterTest {
         MeshDataReader reader = new MeshDataReader();
         MeshData readData = reader.read(bais, VERTS_PER_POLYGON);
 
+        assumeMeshData(readData, meshData);
+    }
+
+    private void assumeMeshData(MeshData readData, MeshData meshData) {
         assertThat(readData.header.vertCount).isEqualTo(meshData.header.vertCount);
         assertThat(readData.header.polyCount).isEqualTo(meshData.header.polyCount);
         assertThat(readData.header.detailMeshCount).isEqualTo(meshData.header.detailMeshCount);

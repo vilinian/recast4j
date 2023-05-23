@@ -26,6 +26,8 @@ import org.recast4j.recast.RecastConfig;
 import org.recast4j.recast.RecastConstants.PartitionType;
 import org.recast4j.recast.geom.InputGeomProvider;
 
+import java.io.InputStream;
+
 public class RecastTestMeshBuilder {
 
     private final MeshData meshData;
@@ -45,6 +47,24 @@ public class RecastTestMeshBuilder {
 
     public RecastTestMeshBuilder() {
         this(new ObjImporter().load(RecastTestMeshBuilder.class.getClassLoader().getResourceAsStream("dungeon.obj")),
+                PartitionType.WATERSHED, m_cellSize, m_cellHeight, m_agentHeight, m_agentRadius, m_agentMaxClimb, m_agentMaxSlope,
+                m_regionMinSize, m_regionMergeSize, m_edgeMaxLen, m_edgeMaxError, m_vertsPerPoly, m_detailSampleDist,
+                m_detailSampleMaxError);
+    }
+
+    public RecastTestMeshBuilder(String fileName) {
+        this(RecastTestMeshBuilder.class.getClassLoader().getResourceAsStream(fileName));
+    }
+
+    public RecastTestMeshBuilder(InputStream inputStream) {
+        this(new ObjImporter().load(inputStream),
+                PartitionType.WATERSHED, m_cellSize, m_cellHeight, m_agentHeight, m_agentRadius, m_agentMaxClimb, m_agentMaxSlope,
+                m_regionMinSize, m_regionMergeSize, m_edgeMaxLen, m_edgeMaxError, m_vertsPerPoly, m_detailSampleDist,
+                m_detailSampleMaxError);
+    }
+
+    public RecastTestMeshBuilder(InputGeomProvider m_geom) {
+        this(m_geom,
                 PartitionType.WATERSHED, m_cellSize, m_cellHeight, m_agentHeight, m_agentRadius, m_agentMaxClimb, m_agentMaxSlope,
                 m_regionMinSize, m_regionMergeSize, m_edgeMaxLen, m_edgeMaxError, m_vertsPerPoly, m_detailSampleDist,
                 m_detailSampleMaxError);

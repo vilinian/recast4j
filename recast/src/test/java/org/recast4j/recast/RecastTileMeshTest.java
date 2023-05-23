@@ -90,29 +90,50 @@ public class RecastTileMeshTest {
     }
 
     @Test
-    public void testPerformance() {
+    public void testDungeonPerformance() {
+        testPerformance("dungeon.obj");
+    }
+
+    @Test
+    public void testNavTestPerformance() {
+        testPerformance("nav_test.obj");
+    }
+
+    public void testPerformance(String filename) {
         ObjImporter importer = new ObjImporter();
-        InputGeomProvider geom = importer.load(getClass().getResourceAsStream("dungeon.obj"));
+        InputGeomProvider geom = importer.load(getClass().getResourceAsStream(filename));
         RecastBuilder builder = new RecastBuilder();
         RecastConfig cfg = new RecastConfig(true, m_tileSize, m_tileSize, RecastConfig.calcBorder(m_agentRadius, m_cellSize),
                 m_partitionType, m_cellSize, m_cellHeight, m_agentMaxSlope, true, true, true, m_agentHeight, m_agentRadius,
                 m_agentMaxClimb, m_regionMinArea, m_regionMergeArea, m_edgeMaxLen, m_edgeMaxError, m_vertsPerPoly, true,
                 m_detailSampleDist, m_detailSampleMaxError, SampleAreaModifications.SAMPLE_AREAMOD_GROUND);
         for (int i = 0; i < 4; i++) {
-            build(geom, builder, cfg, 1, true);
-            build(geom, builder, cfg, 4, true);
+            build(geom, builder, cfg, 1, false);
+            build(geom, builder, cfg, 4, false);
+            build(geom, builder, cfg, 8, false);
+            build(geom, builder, cfg, 16, false);
         }
         long t1 = System.nanoTime();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 8; i++) {
             build(geom, builder, cfg, 1, false);
         }
         long t2 = System.nanoTime();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 8; i++) {
             build(geom, builder, cfg, 4, false);
         }
         long t3 = System.nanoTime();
-        System.out.println(" Time ST : " + (t2 - t1) / 1000000);
-        System.out.println(" Time MT : " + (t3 - t2) / 1000000);
+        for (int i = 0; i < 8; i++) {
+            build(geom, builder, cfg, 8, false);
+        }
+        long t4 = System.nanoTime();
+        for (int i = 0; i < 8; i++) {
+            build(geom, builder, cfg, 16, false);
+        }
+        long t5 = System.nanoTime();
+        System.out.println(" Time 1 : " + (t2 - t1) / 1000000 + " ms");
+        System.out.println(" Time 4 : " + (t3 - t2) / 1000000 + " ms");
+        System.out.println(" Time 8 : " + (t4 - t3) / 1000000 + " ms");
+        System.out.println(" Time 16 : " + (t5 - t4) / 1000000 + " ms");
     }
 
     private void build(InputGeomProvider geom, RecastBuilder builder, RecastConfig cfg, int threads, boolean validate) {

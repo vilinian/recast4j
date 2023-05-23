@@ -50,6 +50,8 @@ public class DynamicNavMeshTest {
                     end.getNearestPos(), filter, NavMeshQuery.DT_FINDPATH_ANY_ANGLE, Float.MAX_VALUE).result;
             // check path length without any obstacles
             assertThat(path).hasSize(16);
+
+            long t1 = System.nanoTime();
             // place obstacle
             Collider colldier = new SphereCollider(SPHERE_POS, 20, SampleAreaModifications.SAMPLE_POLYAREA_TYPE_GROUND, 0.1f);
             long colliderId = mesh.addCollider(colldier);
@@ -57,6 +59,7 @@ public class DynamicNavMeshTest {
             future = mesh.update(executor);
             // wait for update to complete
             future.get();
+            long t2 = System.nanoTime();
             // create new query
             query = new NavMeshQuery(mesh.navMesh());
             // find path again
@@ -66,12 +69,15 @@ public class DynamicNavMeshTest {
                     NavMeshQuery.DT_FINDPATH_ANY_ANGLE, Float.MAX_VALUE).result;
             // check path length with obstacles
             assertThat(path).hasSize(19);
+
+            long t3 = System.nanoTime();
             // remove obstacle
             mesh.removeCollider(colliderId);
             // update navmesh asynchronously
             future = mesh.update(executor);
             // wait for update to complete
             future.get();
+            long t4 = System.nanoTime();
             // create new query
             query = new NavMeshQuery(mesh.navMesh());
             // find path one more time
@@ -81,6 +87,11 @@ public class DynamicNavMeshTest {
                     NavMeshQuery.DT_FINDPATH_ANY_ANGLE, Float.MAX_VALUE).result;
             // path length should be back to the initial value
             assertThat(path).hasSize(16);
+
+            float unit = 1000_000f;
+            System.out.println(String.format("addCollider: %f", (t2 - t1)/unit));
+            System.out.println(String.format("removeCollider: %f", (t4 - t3)/unit));
+            System.out.println();
         }
     }
 }

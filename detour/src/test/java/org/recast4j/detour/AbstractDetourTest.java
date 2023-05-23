@@ -21,8 +21,10 @@ import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractDetourTest {
 
-    protected final long[] startRefs = { 281474976710696L, 281474976710773L, 281474976710680L, 281474976710753L,
-            281474976710733L };
+    private static final int VERTS_PER_POLYGON = 6;
+
+    protected final long[] startRefs = {281474976710696L, 281474976710773L, 281474976710680L, 281474976710753L,
+            281474976710733L};
 
     protected final long[] endRefs = { 281474976710721L, 281474976710767L, 281474976710758L, 281474976710731L,
             281474976710772L };
@@ -40,12 +42,12 @@ public abstract class AbstractDetourTest {
 
     @BeforeEach
     public void setUp() {
-        navmesh = createNavMesh();
+        navmesh = createNavMesh("dungeon.obj");
         query = new NavMeshQuery(navmesh);
     }
 
-    protected NavMesh createNavMesh() {
-        return new NavMesh(new RecastTestMeshBuilder().getMeshData(), 6, 0);
+    protected NavMesh createNavMesh(String fileName) {
+        return new NavMesh(new RecastTestMeshBuilder().getMeshData(), VERTS_PER_POLYGON, 0);
     }
 
 }

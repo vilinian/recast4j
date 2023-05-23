@@ -85,8 +85,21 @@ public class RecastSoloMeshTest {
         testBuild("nav_test.obj", PartitionType.LAYERS, 0, 19, 32, 310, 150, 150, 773, 526);
     }
 
+
+
+    public void testBuildNoAssert(String filename, PartitionType partitionType, boolean printDetail) {
+        testBuild(filename, partitionType, 0, 0, 0, 0, 0, 0, 0, 0, false, printDetail);
+    }
+
+
     public void testBuild(String filename, PartitionType partitionType, int expDistance, int expRegions,
-            int expContours, int expVerts, int expPolys, int expDetMeshes, int expDetVerts, int expDetTris) {
+                          int expContours, int expVerts, int expPolys, int expDetMeshes, int expDetVerts, int expDetTris) {
+        testBuild(filename, partitionType, expDistance, expRegions, expContours, expVerts, expPolys, expDetMeshes, expDetVerts, expDetTris, true, true
+        );
+    }
+
+    public void testBuild(String filename, PartitionType partitionType, int expDistance, int expRegions,
+                          int expContours, int expVerts, int expPolys, int expDetMeshes, int expDetVerts, int expDetTris, boolean assertOn, boolean printDetail) {
         m_partitionType = partitionType;
         ObjImporter importer = new ObjImporter();
         InputGeomProvider geomProvider = importer.load(getClass().getResourceAsStream(filename));
@@ -213,8 +226,10 @@ public class RecastSoloMeshTest {
             RecastRegion.buildLayerRegions(m_ctx, m_chf, cfg.minRegionArea);
         }
 
-        assertThat(m_chf.maxDistance).as("maxDistance").isEqualTo(expDistance);
-        assertThat(m_chf.maxRegions).as("Regions").isEqualTo(expRegions);
+        if (assertOn) {
+            assertThat(m_chf.maxDistance).as("maxDistance").isEqualTo(expDistance);
+            assertThat(m_chf.maxRegions).as("Regions").isEqualTo(expRegions);
+        }
         //
         // Step 5. Trace and simplify region contours.
         //
@@ -223,15 +238,19 @@ public class RecastSoloMeshTest {
         ContourSet m_cset = RecastContour.buildContours(m_ctx, m_chf, cfg.maxSimplificationError, cfg.maxEdgeLen,
                 RecastConstants.RC_CONTOUR_TESS_WALL_EDGES);
 
-        assertThat(m_cset.conts).as("Contours").hasSize(expContours);
+        if (assertOn) {
+            assertThat(m_cset.conts).as("Contours").hasSize(expContours);
+        }
         //
         // Step 6. Build polygons mesh from contours.
         //
 
         // Build polygon navmesh from the contours.
         PolyMesh m_pmesh = RecastMesh.buildPolyMesh(m_ctx, m_cset, cfg.maxVertsPerPoly);
-        assertThat(m_pmesh.nverts).as("Mesh Verts").isEqualTo(expVerts);
-        assertThat(m_pmesh.npolys).as("Mesh Polys").isEqualTo(expPolys);
+        if (assertOn) {
+            assertThat(m_pmesh.nverts).as("Mesh Verts").isEqualTo(expVerts);
+            assertThat(m_pmesh.npolys).as("Mesh Polys").isEqualTo(expPolys);
+        }
 
         //
         // Step 7. Create detail mesh which allows to access approximate height
@@ -240,15 +259,19 @@ public class RecastSoloMeshTest {
 
         PolyMeshDetail m_dmesh = RecastMeshDetail.buildPolyMeshDetail(m_ctx, m_pmesh, m_chf, cfg.detailSampleDist,
                 cfg.detailSampleMaxError);
-        assertThat(m_dmesh.nmeshes).as("Mesh Detail Meshes").isEqualTo(expDetMeshes);
-        assertThat(m_dmesh.nverts).as("Mesh Detail Verts").isEqualTo(expDetVerts);
-        assertThat(m_dmesh.ntris).as("Mesh Detail Tris").isEqualTo(expDetTris);
+        if (assertOn) {
+            assertThat(m_dmesh.nmeshes).as("Mesh Detail Meshes").isEqualTo(expDetMeshes);
+            assertThat(m_dmesh.nverts).as("Mesh Detail Verts").isEqualTo(expDetVerts);
+            assertThat(m_dmesh.ntris).as("Mesh Detail Tris").isEqualTo(expDetTris);
+        }
         long time2 = System.nanoTime();
         System.out.println(filename + " : " + partitionType + "  " + (time2 - time) / 1000000 + " ms");
         System.out.println("           " + (time3 - time) / 1000000 + " ms");
         saveObj(filename.substring(0, filename.lastIndexOf('.')) + "_" + partitionType + "_detail.obj", m_dmesh);
         saveObj(filename.substring(0, filename.lastIndexOf('.')) + "_" + partitionType + ".obj", m_pmesh);
-        m_ctx.print();
+        if (printDetail) {
+            m_ctx.print();
+        }
     }
 
     private void saveObj(String filename, PolyMesh mesh) {

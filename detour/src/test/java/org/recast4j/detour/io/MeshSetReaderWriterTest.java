@@ -32,6 +32,7 @@ import org.recast4j.detour.MeshData;
 import org.recast4j.detour.MeshTile;
 import org.recast4j.detour.NavMesh;
 import org.recast4j.detour.ObjImporter;
+import org.recast4j.detour.RecastTestMeshBuilder;
 import org.recast4j.detour.SampleAreaModifications;
 import org.recast4j.detour.TestDetourBuilder;
 import org.recast4j.recast.Recast;
@@ -41,6 +42,8 @@ import org.recast4j.recast.RecastConstants.PartitionType;
 import org.recast4j.recast.geom.InputGeomProvider;
 
 public class MeshSetReaderWriterTest {
+
+    private static final int VERTS_PER_POLYGON = 6;
 
     private final MeshSetWriter writer = new MeshSetWriter();
     private final MeshSetReader reader = new MeshSetReader();
@@ -63,11 +66,9 @@ public class MeshSetReaderWriterTest {
     private final static int m_maxTiles = 128;
     private final static int m_maxPolysPerTile = 0x8000;
 
-    @Test
-    public void test() throws IOException {
-
+    private NavMesh buildNavMeshTiles(String fileName) {
         InputGeomProvider geom = new ObjImporter()
-                .load(MeshDataReaderWriterTest.class.getClassLoader().getResourceAsStream("dungeon.obj"));
+                .load(MeshSetReaderWriterTest.class.getClassLoader().getResourceAsStream(fileName));
 
         NavMeshSetHeader header = new NavMeshSetHeader();
         header.magic = NavMeshSetHeader.NAVMESHSET_MAGIC;
@@ -78,7 +79,7 @@ public class MeshSetReaderWriterTest {
         header.params.maxTiles = m_maxTiles;
         header.params.maxPolys = m_maxPolysPerTile;
         header.numTiles = 0;
-        NavMesh mesh = new NavMesh(header.params, 6);
+        NavMesh mesh = new NavMesh(header.params, VERTS_PER_POLYGON);
 
         float[] bmin = geom.getMeshBoundsMin();
         float[] bmax = geom.getMeshBoundsMax();
@@ -101,10 +102,25 @@ public class MeshSetReaderWriterTest {
                 }
             }
         }
+        return mesh;
+    }
+
+    private NavMesh buildNavMeshData(String fileName) {
+        RecastTestMeshBuilder rcBuilder = new RecastTestMeshBuilder(fileName);
+        MeshData meshData = rcBuilder.getMeshData();
+        NavMesh mesh = new NavMesh(meshData, VERTS_PER_POLYGON, 0);
+
+        return mesh;
+    }
+
+    @Test
+    public void test() throws IOException {
+        NavMesh mesh = buildNavMeshTiles("dungeon.obj");
+
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writer.write(os, mesh, ByteOrder.LITTLE_ENDIAN, true);
         ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
-        mesh = reader.read(is, 6);
+        mesh = reader.read(is, VERTS_PER_POLYGON);
         assertThat(mesh.getMaxTiles()).isEqualTo(128);
         assertThat(mesh.getParams().maxPolys).isEqualTo(0x8000);
         assertThat(mesh.getParams().tileWidth).isEqualTo(9.6f, offset(0.001f));
