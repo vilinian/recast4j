@@ -20,30 +20,12 @@ package org.recast4j.recast.geom;
 
 import java.util.List;
 
-import org.recast4j.recast.geom.ChunkyTriMesh.ChunkyTriMeshNode;
+public interface TriMesh {
 
-public class TriMesh {
+    int[] getTris();
 
-    private final float[] vertices;
-    private final int[] faces;
-    private final ChunkyTriMesh chunkyTriMesh;
+    float[] getVerts();
 
-    public TriMesh(float[] vertices, int[] faces) {
-        this.vertices = vertices;
-        this.faces = faces;
-        chunkyTriMesh = new ChunkyTriMesh(vertices, faces, faces.length / 3, 32);
-    }
-
-    public int[] getTris() {
-        return faces;
-    }
-
-    public float[] getVerts() {
-        return vertices;
-    }
-
-    public List<ChunkyTriMeshNode> getChunksOverlappingRect(float[] bmin, float[] bmax) {
-        return chunkyTriMesh.getChunksOverlappingRect(bmin, bmax);
-    }
+    List<int[]> getChunksOverlappingRect(float[] bmin, float[] bmax);
 
 }

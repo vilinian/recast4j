@@ -76,8 +76,8 @@ public class DynamicNavMesh {
         navMeshParams.orig[0] = voxelFile.bounds[0];
         navMeshParams.orig[1] = voxelFile.bounds[1];
         navMeshParams.orig[2] = voxelFile.bounds[2];
-        navMeshParams.tileWidth = voxelFile.cellSize * voxelFile.tileSizeX;
-        navMeshParams.tileHeight = voxelFile.cellSize * voxelFile.tileSizeZ;
+        navMeshParams.tileWidth = voxelFile.useTiles ? voxelFile.cellSize * voxelFile.tileSizeX : voxelFile.bounds[3] - voxelFile.bounds[0];
+        navMeshParams.tileHeight = voxelFile.useTiles ? voxelFile.cellSize * voxelFile.tileSizeZ: voxelFile.bounds[5] - voxelFile.bounds[2];
         navMeshParams.maxTiles = voxelFile.tiles.size();
         navMeshParams.maxPolys = 0x8000;
         voxelFile.tiles.forEach(t -> {
@@ -177,20 +177,26 @@ public class DynamicNavMesh {
         if (bounds == null) {
             return tiles.values();
         }
-        int minx = (int) Math.floor((bounds[0] - navMeshParams.orig[0]) / navMeshParams.tileWidth);
-        int minz = (int) Math.floor((bounds[2] - navMeshParams.orig[2]) / navMeshParams.tileHeight);
-        int maxx = (int) Math.floor((bounds[3] - navMeshParams.orig[0]) / navMeshParams.tileWidth);
-        int maxz = (int) Math.floor((bounds[5] - navMeshParams.orig[2]) / navMeshParams.tileHeight);
+        int minx = (int) Math.floor((bounds[0] - navMeshParams.orig[0]) / navMeshParams.tileWidth) - 1;
+        int minz = (int) Math.floor((bounds[2] - navMeshParams.orig[2]) / navMeshParams.tileHeight) - 1;
+        int maxx = (int) Math.floor((bounds[3] - navMeshParams.orig[0]) / navMeshParams.tileWidth) + 1;
+        int maxz = (int) Math.floor((bounds[5] - navMeshParams.orig[2]) / navMeshParams.tileHeight) + 1;
         List<DynamicTile> tiles = new ArrayList<>();
         for (int z = minz; z <= maxz; ++z) {
             for (int x = minx; x <= maxx; ++x) {
                 DynamicTile tile = getTileAt(x, z);
-                if (tile != null) {
+                if (tile != null && intersectsXZ(tile, bounds)) {
                     tiles.add(tile);
                 }
             }
         }
         return tiles;
+    }
+
+    private boolean intersectsXZ(DynamicTile tile, float[] bounds) {
+        return tile.voxelTile.boundsMin[0] <= bounds[3] && tile.voxelTile.boundsMax[0] >= bounds[0] &&
+                tile.voxelTile.boundsMin[2] <= bounds[5] && tile.voxelTile.boundsMax[2] >= bounds[2];
+
     }
 
     private Collection<DynamicTile> getTilesByCollider(long cid) {
@@ -205,10 +211,10 @@ public class DynamicNavMesh {
 
     private boolean updateNavMesh() {
         if (dirty) {
+            dirty = false;
             NavMesh navMesh = new NavMesh(navMeshParams, MAX_VERTS_PER_POLY);
             tiles.values().forEach(t -> t.addTo(navMesh));
             this.navMesh = navMesh;
-            dirty = false;
             return true;
         }
         return false;
@@ -230,4 +236,14 @@ public class DynamicNavMesh {
         return tiles.values().stream().map(t -> t.recastResult).collect(toList());
     }
 
+    public void navMesh(NavMesh mesh) {
+        tiles.values().forEach(t -> {
+            var tiles = mesh.getTilesAt(t.voxelTile.tileX, t.voxelTile.tileZ);
+            if (!tiles.isEmpty()) {
+                t.meshData(tiles.get(0).data);
+            }
+        });
+        navMesh = mesh;
+        dirty = false;
+    }
 }
